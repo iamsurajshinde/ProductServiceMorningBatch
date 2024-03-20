@@ -6,6 +6,7 @@ import com.scaler.productservicemorningbatch.models.Product;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -46,7 +47,13 @@ public class FakeStoreProductService implements ProductService {
 
     @Override
     public List<Product> getAllProducts() {
-        return null;
+        List<Product> productList = new ArrayList<>();
+        FakeStoreProductDto[] fakeStoreProductDtoList = restTemplate.getForObject("https://fakestoreapi.com/products", FakeStoreProductDto[].class);
+        if(null == fakeStoreProductDtoList) return productList;
+        for(FakeStoreProductDto fakeStoreProductDto: fakeStoreProductDtoList) {
+            productList.add(convertFakeStoreProductDtoToProduct(fakeStoreProductDto));
+        }
+        return productList;
     }
 
     @Override
