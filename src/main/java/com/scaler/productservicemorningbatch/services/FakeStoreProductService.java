@@ -1,9 +1,14 @@
 package com.scaler.productservicemorningbatch.services;
 
 import com.scaler.productservicemorningbatch.dtos.FakeStoreProductDto;
+import com.scaler.productservicemorningbatch.exceptions.InvalidProductIdException;
 import com.scaler.productservicemorningbatch.models.Category;
 import com.scaler.productservicemorningbatch.models.Product;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpMessageConverterExtractor;
+import org.springframework.web.client.RequestCallback;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.ArrayList;
@@ -25,36 +30,39 @@ public class FakeStoreProductService implements ProductService {
         product.setImage(fakeStoreProductDto.getImage());
         product.setPrice(fakeStoreProductDto.getPrice());
 
-        Category category = new Category();
-        category.setTitle(fakeStoreProductDto.getCategory());
-        product.setCategory(category);
+//        Category category = new Category();
+//        category.setTitle(fakeStoreProductDto.getCategory());
+        //product.setCategory(category);
         return product;
     }
 
     @Override
-    public Product getProductById(Long id) {
+    public Product getProductById(Long id) throws InvalidProductIdException {
         //Call the FakeStore API to get the product with given ID here.
         FakeStoreProductDto fakeStoreProductDto =
                 restTemplate.getForObject("https://fakestoreapi.com/products/" + id, FakeStoreProductDto.class);
 
         if (fakeStoreProductDto == null) {
-            return null;
+            throw new InvalidProductIdException(id, "Invalid productId passed");
         }
 
         //Convert fakeStoreProductDto to product object.
         return convertFakeStoreProductDtoToProduct(fakeStoreProductDto);
+        //throw new RuntimeException("Something went wrong in FakeStoreProductService");
     }
 
     @Override
     public List<Product> getAllProducts() {
-        List<Product> productList = new ArrayList<>();
-        FakeStoreProductDto[] fakeStoreProductDtoList =
-                restTemplate.getForObject("https://fakestoreapi.com/products", FakeStoreProductDto[].class);
-        if(null == fakeStoreProductDtoList) return productList;
-        for(FakeStoreProductDto fakeStoreProductDto: fakeStoreProductDtoList) {
-            productList.add(convertFakeStoreProductDtoToProduct(fakeStoreProductDto));
+        FakeStoreProductDto[] fakeStoreProductDtos =
+                restTemplate.getForObject("https://fakestoreapi.com/products/",
+                        FakeStoreProductDto[].class);
+
+        List<Product> products = new ArrayList<>();
+        for (FakeStoreProductDto fakeStoreProductDto : fakeStoreProductDtos) {
+            products.add(convertFakeStoreProductDtoToProduct(fakeStoreProductDto));
         }
-        return productList;
+
+        return products;
     }
 
     @Override
@@ -63,8 +71,18 @@ public class FakeStoreProductService implements ProductService {
     }
 
     @Override
-    public Product replaceProduct() {
-        return null;
+    public Product replaceProduct(Long id, Product product) {
+        //PUT Method
+        //Replace the product with given id with the input product
+        //and return the updated product in the output.
+
+        RequestCallback requestCallback = restTemplate.httpEntityCallback(product, FakeStoreProductDto.class);
+        HttpMessageConverterExtractor<FakeStoreProductDto> responseExtractor = new HttpMessageConverterExtractor(FakeStoreProductDto.class,
+                restTemplate.getMessageConverters());
+        FakeStoreProductDto fakeStoreProductDto =
+                restTemplate.execute("https://fakestoreapi.com/products/" + id, HttpMethod.PUT, requestCallback, responseExtractor);
+
+        return convertFakeStoreProductDtoToProduct(fakeStoreProductDto);
     }
 
     @Override

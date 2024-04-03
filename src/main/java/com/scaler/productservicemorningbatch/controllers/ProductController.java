@@ -1,8 +1,13 @@
 package com.scaler.productservicemorningbatch.controllers;
 
+import com.scaler.productservicemorningbatch.exceptions.InvalidProductIdException;
+import com.scaler.productservicemorningbatch.exceptions.ProductControllerSpecificException;
 import com.scaler.productservicemorningbatch.models.Product;
 import com.scaler.productservicemorningbatch.services.ProductService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
 
@@ -20,8 +25,19 @@ public class ProductController {
 
     //localhost:8080/products/30
     @GetMapping("/{id}")
-    public Product getProductById(@PathVariable("id") Long id) {
-        return productService.getProductById(id);
+    public ResponseEntity<Product> getProductById(@PathVariable("id") Long id) throws InvalidProductIdException {
+        //throw new RuntimeException("Something went wrong");
+//        Product product = null;
+//        try {
+//            product = productService.getProductById(id);
+//        } catch (RuntimeException e) {
+//            System.out.println("Something went wrong");
+//            return new ResponseEntity<>(product, HttpStatus.NOT_FOUND);
+//        } catch (ArrayIndexOutOfBoundsException e) {
+//            return
+//        }
+        Product product = productService.getProductById(id);
+        return new ResponseEntity<>(product, HttpStatus.OK);
     }
 
     //localhost:8080/products
@@ -45,11 +61,16 @@ public class ProductController {
     //Replace Product
     @PutMapping("/{id}")
     public Product replaceProduct(@PathVariable("id") Long id,@RequestBody Product product) {
-        return new Product();
+        return productService.replaceProduct(id, product);
     }
 
     @DeleteMapping("/{id}")
     public void deleteProduct(@PathVariable("id") Long id) {
 
+    }
+
+    @ExceptionHandler(ProductControllerSpecificException.class)
+    public ResponseEntity<Void> handleProductControllerSpecificException() {
+        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
     }
 }
