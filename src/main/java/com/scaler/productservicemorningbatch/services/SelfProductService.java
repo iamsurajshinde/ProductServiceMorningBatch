@@ -37,16 +37,35 @@ public class SelfProductService implements ProductService {
     }
 
     @Override
+    //TODO
     public List<Product> getAllProducts() {
         //Fetch all the products from DB
         return null;
     }
 
     @Override
-    public Product updateProduct() {
-        return null;
+    public Product updateProduct(Long id, Product product) {
+        Optional<Product> optionalProduct = productRepository.findById(id);
+
+        if (optionalProduct.isEmpty()) throw new RuntimeException();
+
+        if (product == null) throw new RuntimeException("Invalid input exception to update method");
+
+        Product currentProduct = optionalProduct.get();
+
+        if (product.getTitle() != null) {
+            //If title isn't null that means we want to update the title.
+            currentProduct.setTitle(product.getTitle());
+        }
+
+        if (product.getDescription() != null) {
+            currentProduct.setDescription(product.getDescription());
+        }
+
+        return productRepository.save(currentProduct);
     }
 
+    //TODO
     @Override
     public Product replaceProduct(Long id, Product product) {
         return null;
@@ -56,15 +75,16 @@ public class SelfProductService implements ProductService {
     public Product createProduct(Product product) {
         Category category = product.getCategory();
 
-        if (category.getId() == null) {
-            //first save the category in the DB
-            Category savedCategory = categoryRepository.save(category);
-            product.setCategory(savedCategory);
-        }
+//        if (category.getId() == null) {
+//            //first save the category in the DB
+//            Category savedCategory = categoryRepository.save(category);
+//            product.setCategory(savedCategory);
+//        }
 
         return productRepository.save(product);
     }
 
+    //TODO
     @Override
     public void deleteProduct() {
 
